@@ -1,0 +1,19 @@
+{
+  "name": "assignment1",
+  "version": "1.0.0",
+  "description": "2537 Assignment 1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LaurieSolkoski/2537Assignment1.git"
+  },
+  "author": "lauriesolkoski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LaurieSolkoski/2537Assignment1/issues"
+  },
+  "homepage": "https://github.com/LaurieSolkoski/2537Assignment1#readme"
+}
