@@ -55,8 +55,13 @@ app.use(
 
 // Render the home page with options to sign up or sign in if not logged in
 app.get('/', (req, res) => {
-    res.render('index', { user: req.session.username || 'Guest' });
+  if (req.session.authenticated) {
+    res.render('home-loggedin', { username: req.session.username });
+  } else {
+    res.render('home', {});
+  }
 });
+
 
 
 // Render the sign-up page
@@ -66,91 +71,96 @@ app.get('/signup', (req, res) => {
 
 // Process sign-up form submission
 app.post('/signup', async (req, res) => {
-  const username = req.body.username;
+  const name = req.body.name;
+  const email = req.body.email;
   const password = req.body.password;
 
   // Validate user input
   const schema = Joi.object({
-    username: Joi.string().alphanum().max(20).required(),
+    name: Joi.string().max(20).required(),
+    email: Joi.string().email().required(),
     password: Joi.string().max(20).required(),
   });
 
-  const validationResult = schema.validate({ username, password });
+  const validationResult = schema.validate({ name, email, password });
 
   if (validationResult.error != null) {
     console.log(validationResult.error);
-    res.render('signup', { error: 'Invalid username or password' });
-    return;
-  }
-
-  // Check if the user already exists
-  const existingUser = await userCollection.findOne({ username });
-
-  if (existingUser) {
-    res.render('signup', { error: 'Username is already taken' });
+    res.render('signup', { error: validationResult.error.details[0].message });
     return;
   }
 
   // Hash the password and save the new user to the database
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  await userCollection.insertOne({ username, password: hashedPassword });
+  await userCollection.insertOne({ name, email, password: hashedPassword });
 
-  // Redirect the user to the sign-in page
-  res.redirect('/signin');
+  // Create a session and redirect the user to the /members page
+  req.session.authenticated = true;
+  req.session.username = name;
+  req.session.cookie.maxAge = expireTime;
+  res.redirect('/members');
 });
 
-// Render the sign-in page
-app.get('/signin', (req, res) => {
-    res.render('signin', { error: null });
+
+// Render the log in page
+app.get('/login', (req, res) => {
+  res.render('signin', { error: null });
+});
+
+// Process log in form submission
+app.post('/login', async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  // Validate user input
+  const schema = Joi.object({
+      email: Joi.string().email().required(),
+      password: Joi.string().max(20).required(),
   });
-  
-  // Process sign-in form submission
-  app.post('/signin', async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
-  
-    // Validate user input
-    const schema = Joi.string().max(20).required();
-    const validationResult = schema.validate(username);
-  
-    if (validationResult.error != null) {
+
+  const validationResult = schema.validate({ email, password });
+
+  if (validationResult.error != null) {
       console.log(validationResult.error);
-      res.render('signin', { error: 'Invalid username or password' });
+      res.render('signin', { error: 'Invalid email or password' });
       return;
-    }
-  
-    // Find the user in the database
-    const user = await userCollection.findOne({ username });
-  
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      res.render('signin', { error: 'Invalid username or password' });
+  }
+
+  // Find the user in the database
+  const user = await userCollection.findOne({ email });
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+      res.render('signin', { error: 'Invalid email or password' });
       return;
-    }
-  
-    // Set session variables and redirect to the members area
-    req.session.authenticated = true;
-    req.session.username = username;
-    req.session.cookie.maxAge = expireTime;
-    res.redirect('/members');
-  });
-  
-  // Sign out the user
-  app.get('/signout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/');
-  });
+  }
+
+  // Set session variables and redirect to the members area
+  req.session.authenticated = true;
+  req.session.username = user.name;
+  req.session.cookie.maxAge = expireTime;
+  res.redirect('/members');
+});
+
+// Log out the user
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
   
   // Render the members area with a random image
   app.get('/members', isAuthenticated, (req, res) => {
-    const randomImageUrl = `https://picsum.photos/seed/${Math.floor(
-      Math.random() * 1000
-    )}/600/400`;
+    const images = ['image1.jpeg', 'image2.jpeg', 'image3.jpeg']; // Replace these names with your actual image file names
+    const randomImage = images[Math.floor(Math.random() * images.length)];
     res.render('members', {
       username: req.session.username,
-      imageUrl: randomImageUrl,
+      imageUrl: '/images/' + randomImage,
     });
-  });
+});
+
+
+
+  
   
   // Middleware to check if the user is authenticated
   function isAuthenticated(req, res, next) {
@@ -163,6 +173,7 @@ app.get('/signin', (req, res) => {
   // Add your existing routes here...
   
   app.use(express.static(__dirname + '/public'));
+
   
   app.get('*', (req, res) => {
     res.status(404);
