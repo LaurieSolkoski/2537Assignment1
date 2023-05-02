@@ -167,7 +167,8 @@ app.get('/logout', (req, res) => {
     if (req.session.authenticated) {
       return next();
     }
-    res.redirect('/signin');
+    res.redirect('/login');
+
   }
   
   // Add your existing routes here...
