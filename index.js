@@ -15,7 +15,7 @@ const path = require('path');
 
 const Joi = require("joi");
 
-const expireTime = 8 * 60 * 60 * 1000; // expires after 8 hours (hours * minutes * seconds * millis)
+const expireTime = 1 * 60 * 60 * 1000; // expires after 8 hours (hours * minutes * seconds * millis)
 
 /* secret information section */
 const mongodb_host = process.env.MONGODB_HOST;
