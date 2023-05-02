@@ -115,24 +115,31 @@ app.post('/login', async (req, res) => {
 
   // Validate user input
   const schema = Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().max(20).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().max(20).required(),
   });
 
   const validationResult = schema.validate({ email, password });
 
   if (validationResult.error != null) {
-      console.log(validationResult.error);
-      res.render('signin', { error: 'Invalid email or password' });
-      return;
+    console.log(validationResult.error);
+    res.render('signin', { error: 'Invalid email or password' });
+    return;
   }
 
   // Find the user in the database
   const user = await userCollection.findOne({ email });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-      res.render('signin', { error: 'Invalid email or password' });
-      return;
+  if (!user) {
+    res.render('signin', { error: 'Invalid email or password' });
+    return;
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    res.render('signin', { error: 'Invalid password' });
+    return;
   }
 
   // Set session variables and redirect to the members area
@@ -141,6 +148,7 @@ app.post('/login', async (req, res) => {
   req.session.cookie.maxAge = expireTime;
   res.redirect('/members');
 });
+
 
 // Log out the user
 app.get('/logout', (req, res) => {
