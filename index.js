@@ -167,11 +167,7 @@ app.get('/logout', (req, res) => {
     if (req.session.authenticated) {
       return next();
     }
-<<<<<<< HEAD
-res.redirect('/lognin');
-=======
 res.redirect('/login');
->>>>>>> db08d54bd7d6df68fb2353c97f201d0d56f91143
 
   }
   
