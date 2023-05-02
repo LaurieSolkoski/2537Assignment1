@@ -9,9 +9,14 @@
     <h1>Sign In</h1>
 <form action="/login" method="post">
     <input type="email" name="email" placeholder="Email" required>
-        <input name="password" type="password" placeholder="password" required>
-        <button>Submit</button>
-    </form>
-    <p><a href="/signup">Don't have an account? Sign up.</a></p>
+    <input name="password" type="password" placeholder="password" required>
+    <% if (error) { %>
+      <div style="color: red;">
+        <%= error %>
+      </div>
+    <% } %>
+    <button>Submit</button>
+</form>
+<p><a href="/signup">Don't have an account? Sign up.</a></p>
 </body>
 </html>
